@@ -1,5 +1,7 @@
 # FORM · 产品布景工作台
 
+开发仓库：[SmingYu19791979/form-studio](https://github.com/SmingYu19791979/form-studio)（私有，main 分支）。在另一台电脑先登录 GitHub 并克隆仓库，再阅读 AGENTS.md、DEVELOPMENT_HANDOFF.md 和 GITHUB_SYNC.md。此仓库根目录就是完整工作台源码，可直接运行下方启动命令。
+
 便携使用见 [Mac / Windows 使用说明](先读我-双平台使用说明.md)。Mac 双击 Start-Mac.command，Windows 双击 Start-Windows.cmd；需 Python 3.11+。本地命令行运行（保持窗口开启）：`python3 launch.py`，浏览器打开 http://localhost:8765/。也可双击 start-studio.command 启动。需要本机已安装并登录 Codex；后台沿用现有 Codex 模型与连接配置，消耗相应模型用量。普通静态服务器无法生成新品。
 
 ## 选图后直接在场景中生成

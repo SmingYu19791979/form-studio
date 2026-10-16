@@ -1,5 +1,12 @@
 # FORM · 开发交接（2026-10-16）
 
+## 最新开发入口：GitHub 私有仓库
+
+- 完整 1.2.0 工作台源码、离线素材、测试、研究资料及当前布景已推送到 https://github.com/SmingYu19791979/form-studio ，默认分支 main。首次完整推送为 da09c1d；后续提交以远端 main 为准。
+- GitHub 克隆的根目录就是应用目录，直接读本目录 AGENTS.md / README.md / GITHUB_SYNC.md 并运行 `python3 launch.py`。本仓库没有 Sites 云端根目录的 hosting.json 或开发包工具。
+- GitHub 同步与 Sites 部署独立。下文“云端未同步”指此前 Sites 项目仍为第2版。用户最新选择是通过此 GitHub 私有仓库跨电脑继续开发。
+- 当前布景纳入 runtime/current-project.json；工作台继续自动保存后，需正常提交和推送新变更。账户、凭证、任务日志和发行 ZIP 不进入仓库。另一台电脑需 Python 3.11+，新品研究需本机安装并登录 Codex。
+
 ## 用户此刻真正要做的事
 
 把这个项目保存在云端，回家后在另一台电脑上继续让 Codex 修改、调试和优化代码。此前下载页偏重“使用现有版本”，没有传达开发接续的入口。本文件用来接续项目目标与技术上下文，不是原始聊天记录的完整同步。
