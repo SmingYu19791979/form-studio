@@ -1,0 +1,136 @@
+[
+  {
+    "material": "marble",
+    "asset": "Marble012",
+    "page": "https://ambientcg.com/a/Marble012",
+    "license": "CC0-1.0",
+    "authors": {
+      "ambientCG": "PBR material"
+    },
+    "physicalMm": null,
+    "recommendedTileMm": 700,
+    "files": [
+      {
+        "file": "marble-color.jpg",
+        "channel": "color",
+        "url": "https://ambientcg.com/get?file=Marble012_1K-JPG.zip",
+        "archiveEntry": "Marble012_1K-JPG_Color.jpg",
+        "sha256": "a34b55c889c6b3819d2c351b6409bfd0baf0a0a55b073441850627dfebcdcd1e"
+      },
+      {
+        "file": "marble-normal.jpg",
+        "channel": "normal",
+        "url": "https://ambientcg.com/get?file=Marble012_1K-JPG.zip",
+        "archiveEntry": "Marble012_1K-JPG_NormalGL.jpg",
+        "sha256": "2e9a56525ffbb7e80854b19985a5c921f91192698ea337f4834192479ba0063b"
+      },
+      {
+        "file": "marble-roughness.jpg",
+        "channel": "roughness",
+        "url": "https://ambientcg.com/get?file=Marble012_1K-JPG.zip",
+        "archiveEntry": "Marble012_1K-JPG_Roughness.jpg",
+        "sha256": "f7afd636d6cca0b470549959c514976186df58ac1013016b6c3919910a6d3a04"
+      }
+    ]
+  },
+  {
+    "material": "concrete",
+    "asset": "smooth_concrete_floor",
+    "page": "https://polyhaven.com/a/smooth_concrete_floor",
+    "license": "CC0-1.0",
+    "authors": {
+      "Dimitrios Savva": "All"
+    },
+    "physicalMm": [
+      2000,
+      2000
+    ],
+    "files": [
+      {
+        "file": "concrete-color.jpg",
+        "channel": "color",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/smooth_concrete_floor/smooth_concrete_floor_diff_1k.jpg",
+        "sha256": "079587ae48fb3e2bfb0d0f9209eb75dc26ee30e213403d96377a30f6f6955092"
+      },
+      {
+        "file": "concrete-normal.png",
+        "channel": "normal",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/smooth_concrete_floor/smooth_concrete_floor_nor_gl_1k.png",
+        "sha256": "eca8fe3aafab185e12de4f39f98cb7888636fb6bb378fd4f4b692370368fa648"
+      },
+      {
+        "file": "concrete-roughness.jpg",
+        "channel": "roughness",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/smooth_concrete_floor/smooth_concrete_floor_rough_1k.jpg",
+        "sha256": "89082ede1efd3a60fd600a49e381a5822c89ee3bf75456ad883b3057190042a5"
+      }
+    ]
+  },
+  {
+    "material": "wood",
+    "asset": "white_oak_veneer",
+    "page": "https://polyhaven.com/a/white_oak_veneer",
+    "license": "CC0-1.0",
+    "authors": {
+      "Jenelle van Heerden": "All"
+    },
+    "physicalMm": [
+      500,
+      500
+    ],
+    "files": [
+      {
+        "file": "wood-color.jpg",
+        "channel": "color",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_oak_veneer/white_oak_veneer_diff_1k.jpg",
+        "sha256": "8fdec14fd3c06de907693c9c3241037dc93327ad907296371a2f74a0becd8187"
+      },
+      {
+        "file": "wood-normal.png",
+        "channel": "normal",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/white_oak_veneer/white_oak_veneer_nor_gl_1k.png",
+        "sha256": "aba4a04e10eab36cf0d17b19d5c95323e74dfc62d187f916aa2026fd4dc1cc2c"
+      },
+      {
+        "file": "wood-roughness.jpg",
+        "channel": "roughness",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_oak_veneer/white_oak_veneer_rough_1k.jpg",
+        "sha256": "a8670e80f203bd031ac3c80f0f606383be51a0ee108e016fa19cad6b9bd373e7"
+      }
+    ]
+  },
+  {
+    "material": "linen",
+    "asset": "rough_linen",
+    "page": "https://polyhaven.com/a/rough_linen",
+    "license": "CC0-1.0",
+    "authors": {
+      "colormass": "Photography",
+      "Rico Cilliers": "Processing"
+    },
+    "physicalMm": [
+      270.7081392676629,
+      271.29998803138733
+    ],
+    "files": [
+      {
+        "file": "linen-color.jpg",
+        "channel": "color",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rough_linen/rough_linen_diff_1k.jpg",
+        "sha256": "04897d7611d7390ddf5b2c6f7273f448dfc48341fdbd1f4f207fa30b331d7f57"
+      },
+      {
+        "file": "linen-normal.png",
+        "channel": "normal",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rough_linen/rough_linen_nor_gl_1k.png",
+        "sha256": "ebafddfe30e304f9479e1005c800c4b0b2280fd8de9eeb1a96f92f57b999ea72"
+      },
+      {
+        "file": "linen-roughness.jpg",
+        "channel": "roughness",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rough_linen/rough_linen_rough_1k.jpg",
+        "sha256": "734ad6718841a6e296aacaa6e9ee2e1686eed5f62bb8d71c915c5605e162bcb4"
+      }
+    ]
+  }
+]

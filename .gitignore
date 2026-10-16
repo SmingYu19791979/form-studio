@@ -1,0 +1,10 @@
+runtime/jobs/
+__pycache__/
+*.pyc
+releases/
+.DS_Store
+*.pyo
+runtime/*.tmp
+.env
+.env.*
+!.env.example
