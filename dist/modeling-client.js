@@ -11,17 +11,18 @@ function init(){if($('#modeling-job').dataset.bound)return;$('#modeling-job').da
 export function onGenerationRetry(fn){retryAction=fn;init()}
 export async function acknowledgeGeneration(id){const p=await stored();if(p?.id===id)await stored(null,true);if(active?.id===id){active=null;setTimeout(()=>{if($('#modeling-job').dataset.state==='complete')$('#modeling-job').hidden=true},6000)}}
 export async function pendingGeneration(){return stored()}
-export async function generateProduct(source,name,onProgress=()=>{},resume=null){
- init();$('#loading').hidden=true;let request=resume||{source,name,id:null};let job={status:'queued',message:'正在连接本机 Codex；首次建模需检索同版资料，通常需要数分钟。',createdAt:Date.now()/1000};show(job,name);
+export async function generateProduct(source,name,onProgress=()=>{},resume=null,description=''){
+ init();$('#loading').hidden=true;let request=resume||{source,name,description:description.trim(),id:null};let job={status:'queued',message:'正在连接本机 Codex；首次建模需检索同版资料，通常需要数分钟。',createdAt:Date.now()/1000};show(job,name);
  try{
-  if(!request.id){await stored(request,true);const health=await api('health');if(!health.available)throw new Error('未找到本机 Codex。请安装并登录 Codex 后重试。');await stored(request,true);job=await api('generate',{source:request.source,name:request.name,force:!!request.regenerate});request.id=job.id;delete request.regenerate;await stored(request,true)}
+  if(!request.id){await stored(request,true);const health=await api('health');if(!health.available)throw new Error('未找到本机 Codex。请安装并登录 Codex 后重试。');if((request.description||!request.source)&&!health.capabilities?.includes('product-text-input'))throw new Error('本地服务尚未载入新版文字输入功能。请在启动终端按 Ctrl+C 停止，再重新启动工作台并重试。');await stored(request,true);job=await api('generate',{source:request.source,name:request.name,description:request.description||'',force:!!request.regenerate});request.id=job.id;delete request.regenerate;await stored(request,true)}
   active=request;
   while(true){job=await api('jobs/'+request.id);show(job,name);onProgress(job.message);if(terminal.has(job.status))break;await new Promise(r=>setTimeout(r,1500))}
   if(job.status!=='complete')throw new Error(job.message);
   show({...job,status:'running',message:'正在创建独立几何、分区材质与毫米标定…'},name);
   const {recipe}=await api('jobs/'+request.id+'/result');let built;try{built=await createGeneratedProduct(recipe,request.source,request.id)}catch(e){request.regenerate=true;await stored(request,true);throw e}
+  if(request.description)built.dossier.sources.unshift({id:'user-description',title:'用户补充的产品信息',kind:'用户说明 · 待核对',status:'参考',use:request.description});
   show({...job,message:'已生成专属三维模型，正在保存布景。'},name);
-  return {model:built.model,name:recipe.identity.name+' · '+capacityLabel(built.profile),kind:'Codex 查资料后专属建模',metadata:{photoSource:request.source,sourceFileName:request.name,photoConfig:{method:'generated',tolerance:35,physicalSize:structuredClone(built.model.userData.physicalSize)},photoResearch:built.dossier,generatedRecipe:recipe,generatedProfile:built.profile,generationId:request.id}};
+  return {model:built.model,name:recipe.identity.name+' · '+capacityLabel(built.profile),kind:'Codex 查资料后专属建模',metadata:{photoSource:request.source,sourceFileName:request.name,productDescription:request.description||'',photoConfig:{method:'generated',tolerance:35,physicalSize:structuredClone(built.model.userData.physicalSize)},photoResearch:built.dossier,generatedRecipe:recipe,generatedProfile:built.profile,generationId:request.id}};
  }catch(e){show({...job,status:job.status==='cancelled'?'cancelled':'failed',message:e.message},name);throw e}
 }
 export async function resumeGeneration(onProgress=()=>{},retry=false){const request=await stored();if(!request)return null;if(retry&&request.id){const job=await api('jobs/'+request.id);if(['failed','cancelled'].includes(job.status)||request.regenerate)request.id=null}return generateProduct(request.source,request.name,onProgress,request)}

@@ -79,6 +79,7 @@ def normalize_recipe(recipe):
 
 def complete_recipe(job,recipe,web_used):
     recipe,adjustments=normalize_recipe(recipe);validate_recipe(recipe,web_used)
+    if not job_has_image(job) and any(label['mode']=='source_ink' for label in recipe['labels']):raise ValueError('未上传图片，不能从原图提取印刷；请使用文字标签。')
     path=JOBS/job['id'];target=path/'result.json'
     if adjustments and target.exists() and not (path/'agent-result.json').exists():shutil.copyfile(target,path/'agent-result.json')
     temp=path/'result.tmp';temp.write_text(json.dumps(recipe,ensure_ascii=False),encoding='utf-8');temp.replace(target)
@@ -127,6 +128,24 @@ def load_jobs():
             JOB_MAP[jobid]=job
         except (OSError,ValueError,KeyError):continue
 
+def job_has_image(job):
+    return job.get('hasImage',(JOBS/job['id']/'input.png').is_file())
+
+def modeling_command(job,path,capabilities):
+    command=[*CODEX_COMMAND]
+    if capabilities['noDaemon']:command.append('--no-daemon')
+    command+=['--search','-a','never','exec','--sandbox','read-only','--ephemeral','--skip-git-repo-check']
+    for feature in ['shell_tool','multi_agent','apps','plugins','hooks','browser_use','computer_use']:
+        if feature in capabilities['features']:command+=['--disable',feature]
+    command+=['--json','--output-schema',str(ROOT/'server/recipe-schema.json'),'--output-last-message',str(path/'result.json')]
+    if job_has_image(job):command+=['--image',str(path/'input.png')]
+    command.append('-')
+    return command
+
+def modeling_input(job):
+    evidence={'filename':job['name'],'description':job.get('description',''),'hasImage':job_has_image(job)}
+    return PROMPT+json.dumps(evidence,ensure_ascii=False)+'\n'
+
 def worker():
     while not STOP.is_set():
         jobid=TASKS.get()
@@ -141,12 +160,7 @@ def worker():
             if not CODEX_COMMAND:raise RuntimeError('未找到本机 Codex，请先运行环境检查并安装登录。')
             capabilities=codex_capabilities(tuple(CODEX_COMMAND))
             if not capabilities['compatible']:raise RuntimeError('本机 Codex CLI 版本缺少所需能力，请运行环境检查并更新 Codex。')
-            command=[*CODEX_COMMAND]
-            if capabilities['noDaemon']:command.append('--no-daemon')
-            command+=['--search','-a','never','exec','--sandbox','read-only','--ephemeral','--skip-git-repo-check']
-            for feature in ['shell_tool','multi_agent','apps','plugins','hooks','browser_use','computer_use']:
-                if feature in capabilities['features']:command+=['--disable',feature]
-            command+=['--json','--output-schema',str(ROOT/'server/recipe-schema.json'),'--output-last-message',str(result),'--image',str(path/'input.png'),'-']
+            command=modeling_command(job,path,capabilities)
             config_path=codex_home()/'config.toml'
             try: config=tomllib.loads(config_path.read_text(encoding='utf-8'))
             except (OSError,ValueError):config={}
@@ -162,7 +176,7 @@ def worker():
                 def timeout():
                     if proc.poll() is None:job['timedOut']=True;stop_worker(proc)
                 timer=threading.Timer(1200,timeout);timer.start()
-                proc.stdin.write(PROMPT+json.dumps(job['name'],ensure_ascii=False)+'\n');proc.stdin.close()
+                proc.stdin.write(modeling_input(job));proc.stdin.close()
                 for line in proc.stdout:
                     trace.write(line);trace.flush()
                     try:event=json.loads(line)
@@ -209,7 +223,7 @@ class Handler(SimpleHTTPRequestHandler):
         path=urlparse(self.path).path
         if path.startswith('/api/'):
             if not self.api_allowed():self.send_json({'error':'仅允许本机工作台访问。'},403);return
-            if path=='/api/health':self.send_json({'service':'form-modeling','version':1,'provider':'local-codex','available':bool(CODEX_COMMAND),'jobs':len(JOB_MAP)});return
+            if path=='/api/health':self.send_json({'service':'form-modeling','version':1,'provider':'local-codex','available':bool(CODEX_COMMAND),'jobs':len(JOB_MAP),'capabilities':['product-text-input']});return
             if path=='/api/project':
                 if not PROJECT.exists():self.send_json({'project':None});return
                 self.send_json({'project':json.loads(PROJECT.read_text(encoding='utf-8'))});return
@@ -237,12 +251,21 @@ class Handler(SimpleHTTPRequestHandler):
             if path=='/api/project':save_project(body);self.send_json({'saved':True});return
             if path=='/api/generate':
                 name=body.get('name','产品图片')
-                if not isinstance(name,str) or len(name)>400:raise ValueError('图片名称无效。')
-                source=body.get('source','');match=re.fullmatch(r'data:image/(png|jpeg|webp);base64,([A-Za-z0-9+/=\r\n]+)',source)
-                if not match:raise ValueError('需要PNG、JPEG或WEBP图片。')
-                raw=base64.b64decode(match[2],validate=True)
-                if not 20<len(raw)<8*1024*1024:raise ValueError('图片大小无效。')
-                fingerprint=hashlib.sha256(raw+b'\0'+name.encode()).hexdigest()
+                if not isinstance(name,str) or len(name)>400:raise ValueError('产品名称无效。')
+                description=body.get('description','')
+                if not isinstance(description,str) or len(description)>4000:raise ValueError('产品补充说明请控制在4000字以内。')
+                description=description.strip()
+                source=body.get('source','')
+                if not isinstance(source,str):raise ValueError('产品图片格式无效。')
+                raw=b''
+                if source:
+                    match=re.fullmatch(r'data:image/(png|jpeg|webp);base64,([A-Za-z0-9+/=\r\n]+)',source)
+                    if not match:raise ValueError('需要PNG、JPEG或WEBP图片。')
+                    raw=base64.b64decode(match[2],validate=True)
+                    if not 20<len(raw)<8*1024*1024:raise ValueError('图片大小无效。')
+                if not raw and not description:raise ValueError('请上传产品图片，或填写产品补充说明。')
+                # Preserve legacy image-only fingerprints; new notes distinguish the requested version.
+                fingerprint=hashlib.sha256(raw+b'\0'+name.encode()+(b'\0'+description.encode() if description else b'')).hexdigest()
                 with LOCK:
                     existing=next((j for j in JOB_MAP.values() if j['fingerprint']==fingerprint and j['status'] not in {'failed','cancelled'} and not(body.get('force') is True and j['status']=='complete')),None)
                     if existing:self.send_json(public(existing),200);return
@@ -251,8 +274,9 @@ class Handler(SimpleHTTPRequestHandler):
                         for previous in failed:
                             if recover_researched_result(previous):self.send_json(public(previous),200);return
                     if sum(j['status'] not in TERMINAL for j in JOB_MAP.values())>=6:self.send_json({'error':'已有6个任务等待或执行，请稍后再添加。'},429);return
-                    jobid=uuid.uuid4().hex;directory=JOBS/jobid;directory.mkdir();(directory/'input.png').write_bytes(raw)
-                    job={'id':jobid,'name':name,'fingerprint':fingerprint,'status':'queued','phase':'queued','message':'等待本机 Codex 建模代理。','createdAt':time.time(),'updatedAt':time.time(),'webSearches':0}
+                    jobid=uuid.uuid4().hex;directory=JOBS/jobid;directory.mkdir()
+                    if raw:(directory/'input.png').write_bytes(raw)
+                    job={'id':jobid,'name':name,'description':description,'hasImage':bool(raw),'fingerprint':fingerprint,'status':'queued','phase':'queued','message':'等待本机 Codex 建模代理。','createdAt':time.time(),'updatedAt':time.time(),'webSearches':0}
                     JOB_MAP[jobid]=job;persist(job);TASKS.put(jobid)
                 self.send_json(public(job),202);return
             match=re.fullmatch('/api/jobs/([a-f0-9]{32})/cancel',path)

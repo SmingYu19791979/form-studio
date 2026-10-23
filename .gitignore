@@ -8,3 +8,6 @@ runtime/*.tmp
 .env
 .env.*
 !.env.example
+
+# User-created scenes are local state, not application source.
+runtime/current-project.json

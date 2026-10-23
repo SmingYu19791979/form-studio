@@ -4,6 +4,11 @@ import argparse,json,os,socket,subprocess,sys,signal,time,urllib.error,urllib.re
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 
+def local_health(url,timeout=3):
+    # Health checks are loopback-only; never forward them to a system HTTP proxy.
+    opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    with opener.open(url+'api/health',timeout=timeout) as response:return json.load(response)
+
 def main():
     if hasattr(sys.stdout,'reconfigure'):sys.stdout.reconfigure(encoding='utf-8',errors='replace')
     if sys.version_info<(3,11):print('需要 Python 3.11 或更新版本：https://www.python.org/downloads/');return 1
@@ -16,7 +21,7 @@ def main():
     if sys.platform=='darwin':os.environ['PATH']=os.pathsep.join([str(Path.home()/'.local/bin'),'/opt/homebrew/bin','/usr/local/bin',os.environ.get('PATH','')])
     sys.path.insert(0,str(ROOT/'server'))
     from platform_runtime import resolve_codex,codex_capabilities
-    print('FORM 产品布景工作台 1.2.0\nPython:',sys.version.split()[0])
+    print('FORM 产品布景工作台 1.2.1\nPython:',sys.version.split()[0])
     codex=resolve_codex();compatible=False
     if codex:
         print('Codex: 已找到')
@@ -41,8 +46,10 @@ def main():
         with socket.socket() as probe:probe.bind(('127.0.0.1',port))
     except OSError:
         try:
-            with urllib.request.urlopen(url+'api/health',timeout=3) as response:health=json.load(response)
+            health=local_health(url)
             if health.get('service')=='form-modeling':
+                if 'product-text-input' not in health.get('capabilities',[]):
+                    print('此端口仍在运行旧版工作台。请在原启动窗口按 Ctrl+C 后重新启动，或指定其他端口。');return 1
                 print('此端口已有工作台运行。继续使用现有工作台；若要运行本文件夹，请关闭旧窗口或使用 --port 8766。')
                 if not args.no_browser:webbrowser.open(url)
                 return 0
@@ -53,8 +60,7 @@ def main():
         for _ in range(50):
             if server.poll() is not None:return server.returncode or 1
             try:
-                with urllib.request.urlopen(url+'api/health',timeout=.5) as response:
-                    if json.load(response).get('service')=='form-modeling':break
+                if local_health(url,timeout=.5).get('service')=='form-modeling':break
             except (OSError,ValueError):time.sleep(.1)
         else:print('本机服务启动未完成，请检查上方错误。');return 1
         print('\n工作台：'+url+'\n请保持这个窗口开启；停止服务请按 Ctrl+C。')

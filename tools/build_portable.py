@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'server'))
 from studio_server import validate_project,validate_recipe
-VERSION='1.2.0';NAME='FORM-Studio-'+VERSION+'-Mac-Windows'
+VERSION='1.2.1';NAME='FORM-Studio-'+VERSION+'-Mac-Windows'
 
 def build(output):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
@@ -16,13 +16,13 @@ def build(output):
         (stage/'server').mkdir()
         for path in (ROOT/'server').iterdir():
             if path.suffix in {'.py','.json','.txt'}:shutil.copy2(path,stage/'server'/path.name)
-        for name in ['launch.py','Start-Mac.command','Start-Windows.cmd','Check-Mac.command','Check-Windows.cmd','先读我-双平台使用说明.md','README.md','THIRD-PARTY-NOTICES.txt']:
+        for name in ['launch.py','Start-Mac.command','Start-Windows.cmd','Check-Mac.command','Check-Windows.cmd','先读我-双平台使用说明.md','README.md','THIRD-PARTY-NOTICES.txt','LICENSE','跨机器测试记录.md','CHANGELOG.md']:
             shutil.copy2(ROOT/name,stage/name)
         for path in stage.glob('*.cmd'):
             path.write_bytes(path.read_text(encoding='utf-8').replace('\r\n','\n').replace('\n','\r\n').encode('utf-8'))
         (stage/'runtime/jobs').mkdir(parents=True)
         # A clean starter edition: one built-in cream, no personal scene or previous product jobs.
-        config={'port':8768,'storageNamespace':'form-product-studio-starter-v1','taskNamespace':'form-modeling-tasks-starter-v1','showQuickGuide':True,'sampleOnly':True}
+        config={'port':8768,'storageNamespace':'form-product-studio-release-1-2-1','taskNamespace':'form-modeling-release-1-2-1','showQuickGuide':True,'sampleOnly':True}
         (stage/'dist/studio-config.json').write_text(json.dumps(config,ensure_ascii=False),encoding='utf-8')
         cache_count=0
         font=json.loads((ROOT/'dist/assets/fonts/helvetiker_regular.typeface.json').read_text(encoding='utf-8'))

@@ -1,4 +1,5 @@
-import json,os,sys,tempfile,unittest
+import json,os,sys,tempfile,unittest,threading
+from http.server import BaseHTTPRequestHandler,HTTPServer
 from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'server'))
@@ -7,6 +8,23 @@ from studio_server import validate_project,save_project
 import studio_server as studio
 
 class PortableRuntime(unittest.TestCase):
+    def test_launcher_health_uses_loopback_even_when_proxy_is_broken(self):
+        sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+        from launch import local_health
+        class Health(BaseHTTPRequestHandler):
+            def do_GET(self):
+                body=json.dumps({'service':'form-modeling','capabilities':['product-text-input']}).encode()
+                self.send_response(200);self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
+            def log_message(self,*args):pass
+        server=HTTPServer(('127.0.0.1',0),Health)
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            with patch.dict(os.environ,{'HTTP_PROXY':'http://127.0.0.1:1','http_proxy':'http://127.0.0.1:1','NO_PROXY':'','no_proxy':''}):
+                health=local_health(f'http://127.0.0.1:{server.server_port}/',timeout=2)
+            self.assertEqual(health['service'],'form-modeling')
+            self.assertIn('product-text-input',health['capabilities'])
+        finally:server.shutdown();server.server_close();thread.join(timeout=2)
+
     def test_windows_npm_wrapper_uses_node_directly_without_command_shell(self):
         with tempfile.TemporaryDirectory(prefix='FORM 含空格 ') as tmp:
             folder=Path(tmp);wrapper=folder/'codex.cmd';wrapper.touch();script=folder/'node_modules/@openai/codex/bin/codex.js';script.parent.mkdir(parents=True);script.touch()
